@@ -1,12 +1,19 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Api.Database.Models
 {
     /// <summary>
     /// Defines some basic properties that every entity should have
     /// </summary>
-    public class BaseEntity
+    public abstract class BaseEntity
     {
+        /// <summary>
+        /// The Id of the entity
+        /// </summary>
+        [Key]
+        public long Id { get; set; }
+
         /// <summary>
         /// When the item was created
         /// </summary>

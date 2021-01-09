@@ -10,7 +10,6 @@ namespace Api.Database.Models
         /// <summary>
         /// The suername of the user
         /// </summary>
-        [Key]
         public string UserName { get; set; }
 
         /// <summary>
