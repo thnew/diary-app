@@ -19,5 +19,7 @@
   <ItemGroup>
     <Folder Include="Database\" />
     <Folder Include="Database\Models\" />
+    <Folder Include="Controllers\Diary\" />
+    <Folder Include="Controllers\Diary\Models\" />
   </ItemGroup>
 </Project>
