@@ -21,3 +21,12 @@ We can now connect to the database for example by using the Azure Data Studio an
 | Server   | localhost |
 | Username | sa        |
 | Password | Test1234  |
+
+## Creating the database with migrations
+We are using Entity Farmework Migrations here to keep the database up to date. Here's what's important for the initial setup (following this totorial: https://docs.microsoft.com/en-gb/ef/core/cli/dotnet:
+- Make sure you have the Entity Framework tools installed:
+  - ```dotnet tool install --global dotnet-ef```
+- Setup your database using the migration scripts:
+  - ```dotnet ef database update -- --environment Development```
+
+Check out the page /database/migrations.md to see more commands regarding the migrations.
