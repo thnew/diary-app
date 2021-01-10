@@ -22,7 +22,7 @@ namespace Api.Database.Models
         /// <summary>
         /// Who created the entity
         /// </summary>
-        public string CeratedBy { get; set; }
+        public string CreatedBy { get; set; }
 
         /// <summary>
         /// When the item was modified
@@ -33,5 +33,29 @@ namespace Api.Database.Models
         /// Who modified the item
         /// </summary>
         public string ModifiedBy { get; set; }
+
+        /// <summary>
+        /// Updated the properties about the msot recent modification
+        /// </summary>
+        public T SetCreated<T>(string nameOfCreatingUser)
+            where T : BaseEntity
+        {
+            ModifiedAt = DateTime.Now;
+            ModifiedBy = nameOfCreatingUser;
+
+            return this as T;
+        }
+
+        /// <summary>
+        /// Updated the properties about the msot recent modification
+        /// </summary>
+        public T UpdateModified<T>(string nameOfMdifyingUser)
+            where T : BaseEntity
+        {
+            ModifiedAt = DateTime.Now;
+            ModifiedBy = nameOfMdifyingUser;
+
+            return this as T;
+        }
     }
 }

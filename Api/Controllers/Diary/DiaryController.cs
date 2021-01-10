@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Api.Controllers.Diary.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,21 +13,29 @@ namespace Api.Controllers.Diary
     [Route("/api/diary")]
     public class DiaryController : ControllerBase
     {
-        public DiaryController()
+        private readonly DiaryBusinessService _diaryBusinessService;
+
+        public DiaryController(DiaryBusinessService diaryBusinessService)
         {
+            _diaryBusinessService = diaryBusinessService;
         }
 
+        /// <summary>
+        /// Returns all diary entries of the current user
+        /// </summary>
         [HttpGet]
-        public IEnumerable<DiaryEntryViewModel> GetAll()
+        public async Task<IEnumerable<DiaryEntryViewModel>> GetAll()
         {
-            return new List<DiaryEntryViewModel>
-            {
-                new DiaryEntryViewModel
-                {
-                    EventAt = DateTime.Now,
-                    Description = "Testentry"
-                }
-            };
+            return await _diaryBusinessService.GetAllEntriesForCurrentUser();
+        }
+
+        /// <summary>
+        /// Used to create new diary entries
+        /// </summary>
+        [HttpPost]
+        public async Task<DiaryEntryViewModel> CreateNewEntry(DiaryEntryCreateModel createModel)
+        {
+            return await _diaryBusinessService.CreateNewEntry(createModel);
         }
     }
 }

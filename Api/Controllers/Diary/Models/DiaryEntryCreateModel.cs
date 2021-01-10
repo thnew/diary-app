@@ -4,15 +4,10 @@ using System.Collections.Generic;
 namespace Api.Controllers.Diary.Models
 {
     /// <summary>
-    /// The view model for diary entries
+    /// Model to create a new diary entry
     /// </summary>
-    public class DiaryEntryViewModel
+    public class DiaryEntryCreateModel
     {
-        /// <summary>
-        /// The id of the entity
-        /// </summary>
-        public long Id { get; set; }
-
         /// <summary>
         /// When the described event happened
         /// </summary>
@@ -26,6 +21,6 @@ namespace Api.Controllers.Diary.Models
         /// <summary>
         /// Images connected to this entry
         /// </summary>
-        public IEnumerable<DiaryImageViewModel> Images { get; set; }
+        public IEnumerable<DiaryImageCreateModel> Images { get; set; }
     }
 }

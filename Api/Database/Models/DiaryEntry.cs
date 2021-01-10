@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Api.Database.Models
@@ -28,5 +29,11 @@ namespace Api.Database.Models
         /// Foreign Key for User
         /// </summary>
         public long UserId { get; set; }
+
+        /// <summary>
+        /// The connected diary images
+        /// </summary>
+        [InverseProperty(nameof(DiaryImage.DiaryEntry))]
+        public IEnumerable<DiaryImage> DiaryImages { get; set; }
     }
 }
