@@ -40,8 +40,8 @@ namespace Api.Database.Models
         public T SetCreated<T>(string nameOfCreatingUser)
             where T : BaseEntity
         {
-            ModifiedAt = DateTime.Now;
-            ModifiedBy = nameOfCreatingUser;
+            CreatedAt = DateTime.Now;
+            CreatedBy = nameOfCreatingUser;
 
             return this as T;
         }

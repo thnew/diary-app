@@ -24,6 +24,22 @@ namespace Api.Controllers.Diary
         }
 
         /// <summary>
+        /// Returns the referenced diary entry
+        /// </summary>
+        /// <remarks>Throws error if it does not belong to the current user</remarks>
+        public async Task<DiaryEntryViewModel> GetById(long id)
+        {
+            var currentUserId = _userBusinessService.GetCurrentUserId();
+
+            var entry = await _databaseContext
+                .Set<DiaryEntry>()
+                .Include(x => x.DiaryImages)
+                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == currentUserId);
+
+            return BuildViewModelFromDiaryEntry(entry);
+        }
+
+        /// <summary>
         /// Returns all diary entries of the current user
         /// </summary>
         public async Task<IEnumerable<DiaryEntryViewModel>> GetAllEntriesForCurrentUser()
@@ -34,18 +50,7 @@ namespace Api.Controllers.Diary
                 .Set<DiaryEntry>()
                 .Include(x => x.DiaryImages)
                 .Where(x => x.UserId == currentUserId)
-                .Select(x => new DiaryEntryViewModel
-                {
-                    Id = x.Id,
-                    Description = x.Description,
-                    EventAt = x.EventAt,
-                    Images = x.DiaryImages.Select(image => new DiaryImageViewModel
-                    {
-                        Id = image.Id,
-                        ImageFileName = image.ImageFileName,
-                        ImageFile = image.ImageFile
-                    })
-                })
+                .Select(x => BuildViewModelFromDiaryEntry(x))
                 .ToListAsync();
         }
 
@@ -94,6 +99,82 @@ namespace Api.Controllers.Diary
                     Id = x.Id,
                     ImageFileName = x.ImageFileName,
                     ImageFile = x.ImageFile
+                })
+            };
+        }
+
+        /// <summary>
+        /// Used to modify an existing diary entry
+        /// </summary>
+        public async Task<(bool hasErrors, string errorMessage, DiaryEntry result)> ModifyEntry(DiaryEntryModifyModel modifyModel)
+        {
+            var currentUserName = _userBusinessService.GetCurrentUserName();
+
+            var entry = await _databaseContext
+                .Set<DiaryEntry>()
+                .Include(x => x.DiaryImages)
+                .FirstOrDefaultAsync(x => x.Id == modifyModel.Id);
+            if (entry == null)
+            {
+                return (true, $"The diary entry with id {modifyModel.Id} could not be found.", null);
+            }
+
+            entry.Description = modifyModel.Description;
+            entry.EventAt = modifyModel.EventAt;
+            entry.UpdateModified<DiaryEntry>(currentUserName);
+
+            await UpdateDiaryImages(entry.DiaryImages, modifyModel.Images, entry.Id, currentUserName);
+
+            await _databaseContext.SaveChangesAsync();
+
+            return (false, null, entry);
+        }
+
+        private async Task UpdateDiaryImages(
+            ICollection<DiaryImage> diaryImages,
+            IEnumerable<DiaryImageModifyModel> updatedImages,
+            long diaryEntryId,
+            string currentUserName)
+        {
+            var imagesToDelete = diaryImages.Where(x => !updatedImages.Any(y => y.Id == x.Id));
+            var imagesToAdd = updatedImages.Where(x => !diaryImages.Any(y => y.Id == x.Id));
+            var imagesToModify = diaryImages.Where(x => updatedImages.Any(y => y.Id == x.Id));
+
+            var diaryImageSet = _databaseContext.Set<DiaryImage>();
+
+            // Delete
+            diaryImageSet.RemoveRange(imagesToDelete);
+
+            // Add
+            await diaryImageSet.AddRangeAsync(imagesToAdd.Select(x => new DiaryImage
+            {
+                ImageFileName = x.ImageFileName,
+                ImageFile = x.ImageFile,
+                DiaryEntryId = diaryEntryId
+            }.SetCreated<DiaryImage>(currentUserName)));
+
+            // Modify
+            foreach(var image in imagesToModify)
+            {
+                var updatedImage = updatedImages.FirstOrDefault(x => x.Id == image.Id);
+                image.ImageFileName = updatedImage.ImageFileName;
+                image.ImageFile = updatedImage.ImageFile;
+                image.UpdateModified<DiaryImage>(currentUserName);
+            }
+        }
+
+        private static DiaryEntryViewModel BuildViewModelFromDiaryEntry(DiaryEntry x)
+        {
+            return new DiaryEntryViewModel
+            {
+                Id = x.Id,
+                Description = x.Description,
+                EventAt = x.EventAt,
+                Images = x.DiaryImages.Select(image => new DiaryImageViewModel
+                {
+                    Id = image.Id,
+                    ImageFileName = image.ImageFileName,
+                    ImageFile = image.ImageFile
                 })
             };
         }

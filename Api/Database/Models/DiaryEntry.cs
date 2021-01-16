@@ -34,6 +34,6 @@ namespace Api.Database.Models
         /// The connected diary images
         /// </summary>
         [InverseProperty(nameof(DiaryImage.DiaryEntry))]
-        public IEnumerable<DiaryImage> DiaryImages { get; set; }
+        public ICollection<DiaryImage> DiaryImages { get; set; }
     }
 }
