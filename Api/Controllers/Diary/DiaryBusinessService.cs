@@ -68,16 +68,19 @@ namespace Api.Controllers.Diary
                  .Set<DiaryEntry>()
                  .AddAsync(diaryEntry);
 
-            var diaryImages = createModel.Images.Select(x => new DiaryImage
+            var diaryImages = createModel.Images?.Select(x => new DiaryImage
             {
                 ImageFileName = x.ImageFileName,
                 ImageFile = x.ImageFile,
                 DiaryEntryId = diaryEntry.Id
             }.SetCreated<DiaryImage>(currentUserName));
 
-            await _databaseContext
-                 .Set<DiaryImage>()
-                 .AddRangeAsync(diaryImages);
+            if (diaryImages != null)
+            {
+                await _databaseContext
+                     .Set<DiaryImage>()
+                     .AddRangeAsync(diaryImages);
+            }
 
             await _databaseContext.SaveChangesAsync();
 
@@ -86,7 +89,7 @@ namespace Api.Controllers.Diary
                 Id = diaryEntry.Id,
                 EventAt = diaryEntry.EventAt,
                 Description = diaryEntry.Description,
-                Images = diaryImages.Select(x => new DiaryImageViewModel
+                Images = diaryImages?.Select(x => new DiaryImageViewModel
                 {
                     Id = x.Id,
                     ImageFileName = x.ImageFileName,

@@ -1,3 +1,5 @@
+using Api.BusinessServices;
+using Api.Controllers.Diary;
 using Api.Database;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,6 +30,9 @@ namespace Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
             });
 
+            services.AddSingleton(provider => Configuration);
+            AddServices(services);
+
             services.AddDbContext<DatabaseContext>(options =>
             {
                 options.UseSqlServer(
@@ -37,6 +42,12 @@ namespace Api
                         builder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "dbo");
                     });
             }, ServiceLifetime.Transient);
+        }
+
+        public static void AddServices(IServiceCollection services)
+        {
+            services.AddScoped<DiaryBusinessService>();
+            services.AddScoped<UserBusinessService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
