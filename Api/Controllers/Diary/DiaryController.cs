@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Api.Controllers.Diary.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +27,13 @@ namespace Api.Controllers.Diary
         [Route("{id}")]
         public async Task<IActionResult> GetById(long id)
         {
-            return Ok(await _diaryBusinessService.GetById(id));
+            var result = await _diaryBusinessService.GetById(id);
+            if (result.hasErrors)
+            {
+                return BadRequest(result.errorMessage);
+            }
+
+            return Ok(result.result);
         }
 
         /// <summary>

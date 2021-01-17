@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Api.Database.Models;
 
 namespace Api.BusinessServices
 {
@@ -8,27 +8,27 @@ namespace Api.BusinessServices
     public class UserBusinessService
     {
         /// <summary>
+        /// The name of the current user
+        /// </summary>
+        public long CurrentUserId { get; private set; } = 1;
+
+        /// <summary>
+        /// The name the current user
+        /// </summary>
+        public string CurrentUserName { get; private set; } = "DummyUser";
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public UserBusinessService() { }
 
         /// <summary>
-        /// Returns the name of the current user
+        /// Sets the properties for the current user
         /// </summary>
-        public string GetCurrentUserName()
+        public void SetCurrentUser(User currentUser)
         {
-            // TODO: Implement
-            return "DummyUser";
-        }
-
-
-        /// <summary>
-        /// Returns the id of the current user
-        /// </summary>
-        public long GetCurrentUserId()
-        {
-            // TODO: Implement
-            return 1;
+            CurrentUserId = currentUser.Id;
+            CurrentUserName = currentUser.UserName;
         }
     }
 }

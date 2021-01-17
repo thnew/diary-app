@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Api.BusinessServices;
@@ -27,16 +26,18 @@ namespace Api.Controllers.Diary
         /// Returns the referenced diary entry
         /// </summary>
         /// <remarks>Throws error if it does not belong to the current user</remarks>
-        public async Task<DiaryEntryViewModel> GetById(long id)
+        public async Task<(bool hasErrors, string errorMessage, DiaryEntryViewModel result)> GetById(long id)
         {
-            var currentUserId = _userBusinessService.GetCurrentUserId();
-
             var entry = await _databaseContext
                 .Set<DiaryEntry>()
                 .Include(x => x.DiaryImages)
-                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == currentUserId);
+                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == _userBusinessService.CurrentUserId);
+            if (entry == null)
+            {
+                return (true, "ERROR_DIARY_ENTRY_NOT_FOUND", null);
+            }
 
-            return BuildViewModelFromDiaryEntry(entry);
+            return (false, null, BuildViewModelFromDiaryEntry(entry));
         }
 
         /// <summary>
@@ -44,12 +45,10 @@ namespace Api.Controllers.Diary
         /// </summary>
         public async Task<IEnumerable<DiaryEntryViewModel>> GetAllEntriesForCurrentUser()
         {
-            var currentUserId = _userBusinessService.GetCurrentUserId();
-
             return await _databaseContext
                 .Set<DiaryEntry>()
                 .Include(x => x.DiaryImages)
-                .Where(x => x.UserId == currentUserId)
+                .Where(x => x.UserId == _userBusinessService.CurrentUserId)
                 .Select(x => BuildViewModelFromDiaryEntry(x))
                 .ToListAsync();
         }
@@ -59,15 +58,12 @@ namespace Api.Controllers.Diary
         /// </summary>
         public async Task<DiaryEntryViewModel> CreateNewEntry(DiaryEntryCreateModel createModel)
         {
-            var currentUserId = _userBusinessService.GetCurrentUserId();
-            var currentUserName = _userBusinessService.GetCurrentUserName();
-
             var diaryEntry = new DiaryEntry()
             {
                 EventAt = createModel.EventAt,
                 Description = createModel.Description,
-                UserId = currentUserId
-            }.SetCreated<DiaryEntry>(currentUserName);
+                UserId = _userBusinessService.CurrentUserId
+            }.SetCreated<DiaryEntry>(_userBusinessService.CurrentUserName);
 
             await _databaseContext
                  .Set<DiaryEntry>()
@@ -78,7 +74,7 @@ namespace Api.Controllers.Diary
                 ImageFileName = x.ImageFileName,
                 ImageFile = x.ImageFile,
                 DiaryEntryId = diaryEntry.Id
-            }.SetCreated<DiaryImage>(currentUserName));
+            }.SetCreated<DiaryImage>(_userBusinessService.CurrentUserName));
 
             if (diaryImages != null)
             {
@@ -108,22 +104,23 @@ namespace Api.Controllers.Diary
         /// </summary>
         public async Task<(bool hasErrors, string errorMessage, DiaryEntry result)> ModifyEntry(DiaryEntryModifyModel modifyModel)
         {
-            var currentUserName = _userBusinessService.GetCurrentUserName();
-
             var entry = await _databaseContext
                 .Set<DiaryEntry>()
                 .Include(x => x.DiaryImages)
-                .FirstOrDefaultAsync(x => x.Id == modifyModel.Id);
+                .FirstOrDefaultAsync(x => x.Id == modifyModel.Id && x.UserId == _userBusinessService.CurrentUserId);
             if (entry == null)
             {
-                return (true, $"The diary entry with id {modifyModel.Id} could not be found.", null);
+                return (true, "ERROR_DIARY_ENTRY_NOT_FOUND", null);
             }
 
             entry.Description = modifyModel.Description;
             entry.EventAt = modifyModel.EventAt;
-            entry.UpdateModified<DiaryEntry>(currentUserName);
+            entry.UpdateModified<DiaryEntry>(_userBusinessService.CurrentUserName);
 
-            await UpdateDiaryImages(entry.DiaryImages, modifyModel.Images, entry.Id, currentUserName);
+            if (modifyModel.ShouldUpdateImages)
+            {
+                await UpdateDiaryImages(entry.DiaryImages, modifyModel.Images, entry.Id, _userBusinessService.CurrentUserName);
+            }
 
             await _databaseContext.SaveChangesAsync();
 
@@ -136,6 +133,8 @@ namespace Api.Controllers.Diary
             long diaryEntryId,
             string currentUserName)
         {
+            updatedImages ??= new List<DiaryImageModifyModel>();
+
             var imagesToDelete = diaryImages.Where(x => !updatedImages.Any(y => y.Id == x.Id));
             var imagesToAdd = updatedImages.Where(x => !diaryImages.Any(y => y.Id == x.Id));
             var imagesToModify = diaryImages.Where(x => updatedImages.Any(y => y.Id == x.Id));
@@ -154,7 +153,7 @@ namespace Api.Controllers.Diary
             }.SetCreated<DiaryImage>(currentUserName)));
 
             // Modify
-            foreach(var image in imagesToModify)
+            foreach (var image in imagesToModify)
             {
                 var updatedImage = updatedImages.FirstOrDefault(x => x.Id == image.Id);
                 image.ImageFileName = updatedImage.ImageFileName;
@@ -165,6 +164,8 @@ namespace Api.Controllers.Diary
 
         private static DiaryEntryViewModel BuildViewModelFromDiaryEntry(DiaryEntry x)
         {
+            if (x == null) return null;
+
             return new DiaryEntryViewModel
             {
                 Id = x.Id,
