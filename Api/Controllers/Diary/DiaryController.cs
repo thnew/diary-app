@@ -57,16 +57,69 @@ namespace Api.Controllers.Diary
         /// <summary>
         /// Used to modify an existing diary entry
         /// </summary>
+        /// <remarks>Throws error if it does not belong to the current user</remarks>
         [HttpPut]
-        public async Task<IActionResult> ModifyEntry(DiaryEntryModifyModel modifyModel)
+        [Route("{id}")]
+        public async Task<IActionResult> ModifyEntry(long id, [FromBody] DiaryEntryModifyModel modifyModel)
         {
-            var result = await _diaryBusinessService.ModifyEntry(modifyModel);
-            if(result.hasErrors)
+            var result = await _diaryBusinessService.ModifyEntry(id, modifyModel);
+            if (result.hasErrors)
             {
                 return BadRequest(result.errorMessage);
             }
 
-            return await GetById(modifyModel.Id);
+            return await GetById(id);
+        }
+
+        /// <summary>
+        /// Used to archive a diary entry
+        /// </summary>
+        /// <remarks>Throws error if it does not belong to the current user</remarks>
+        [HttpPut]
+        [Route("{id}/archive")]
+        public async Task<IActionResult> ArchiveEntry(long id)
+        {
+            var result = await _diaryBusinessService.ArchiveEntry(id, true);
+            if (result.hasErrors)
+            {
+                return BadRequest(result.errorMessage);
+            }
+
+            return await GetById(id);
+        }
+
+        /// <summary>
+        /// Used to unarchive a diary entry
+        /// </summary>
+        /// <remarks>Throws error if it does not belong to the current user</remarks>
+        [HttpPut]
+        [Route("{id}/unarchive")]
+        public async Task<IActionResult> UnarchiveEntry(long id)
+        {
+            var result = await _diaryBusinessService.ArchiveEntry(id, false);
+            if (result.hasErrors)
+            {
+                return BadRequest(result.errorMessage);
+            }
+
+            return await GetById(id);
+        }
+
+        /// <summary>
+        /// Used to delete a diary entry
+        /// </summary>
+        /// <remarks>Throws error if it does not belong to the current user</remarks>
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<IActionResult> DeleteEntry(long id)
+        {
+            var result = await _diaryBusinessService.DeleteEntry(id);
+            if (result.hasErrors)
+            {
+                return BadRequest(result.errorMessage);
+            }
+
+            return Ok();
         }
     }
 }

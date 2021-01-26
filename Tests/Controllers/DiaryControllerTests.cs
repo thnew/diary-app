@@ -50,8 +50,8 @@ namespace Tests
             var userBusinessService = (UserBusinessService)ServiceProvider.GetService(typeof(UserBusinessService));
 
             // Act
-            var result = await _controller.GetById(diaryEntry.Id) as OkObjectResult;
-            var savedDiaryEntry = result.Value as DiaryEntryViewModel;
+            var result = (OkObjectResult)await _controller.GetById(diaryEntry.Id);
+            var savedDiaryEntry = (DiaryEntryViewModel)result.Value;
 
             // Assert
             Assert.AreEqual(diaryEntry.Description, savedDiaryEntry.Description);
@@ -71,6 +71,7 @@ namespace Tests
             Assert.AreEqual(DateTime.Now.Month, dbEntry.CreatedAt.Month);
             Assert.AreEqual(DateTime.Now.Day, dbEntry.CreatedAt.Day);
             Assert.AreEqual(userBusinessService.CurrentUserName, dbEntry.CreatedBy);
+            Assert.IsFalse(dbEntry.IsArchived);
         }
 
         [TestMethod]
@@ -101,7 +102,6 @@ namespace Tests
 
             var modifyModel = new DiaryEntryModifyModel
             {
-                Id = diaryEntry.Id,
                 Description = "New Description",
                 EventAt = new DateTime(2021, 1, 16, 15, 15, 15),
                 ShouldUpdateImages = shouldUpdateImages,
@@ -128,8 +128,8 @@ namespace Tests
             var userBusinessService = (UserBusinessService)ServiceProvider.GetService(typeof(UserBusinessService));
 
             // Act
-            var result = (OkObjectResult)await _controller.ModifyEntry(modifyModel);
-            var savedDiaryEntry = result.Value as DiaryEntryViewModel;
+            var result = (OkObjectResult)await _controller.ModifyEntry(diaryEntry.Id, modifyModel);
+            var savedDiaryEntry = (DiaryEntryViewModel)result.Value;
 
             // Assert
             Assert.AreEqual(modifyModel.Description, modifyModel.Description);
@@ -211,21 +211,131 @@ namespace Tests
 
             var modifyModel = new DiaryEntryModifyModel
             {
-                Id = diaryEntry.Id,
                 Description = "New Description",
                 EventAt = new DateTime(2021, 1, 16, 15, 15, 15)
             };
 
             // Act
-            var resultA = (BadRequestObjectResult)await _controller.GetById(diaryEntry.Id);
-            var resultB = (BadRequestObjectResult)await _controller.ModifyEntry(modifyModel);
+            var resultGet = (BadRequestObjectResult)await _controller.GetById(diaryEntry.Id);
+            var resultModify = (BadRequestObjectResult)await _controller.ModifyEntry(diaryEntry.Id, modifyModel);
+            var resultArchive = (BadRequestObjectResult)await _controller.ArchiveEntry(diaryEntry.Id);
+            var resultUnarchive = (BadRequestObjectResult)await _controller.UnarchiveEntry(diaryEntry.Id);
+            var resultDelete = (BadRequestObjectResult)await _controller.DeleteEntry(diaryEntry.Id);
 
             // Assert
-            Assert.IsNotNull(resultA);
-            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultA.Value);
+            Assert.IsNotNull(resultGet);
+            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultGet.Value);
 
-            Assert.IsNotNull(resultB);
-            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultB.Value);
+            Assert.IsNotNull(resultModify);
+            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultModify.Value);
+
+            Assert.IsNotNull(resultArchive);
+            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultArchive.Value);
+
+            Assert.IsNotNull(resultUnarchive);
+            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultUnarchive.Value);
+
+            Assert.IsNotNull(resultDelete);
+            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", resultDelete.Value);
+        }
+
+        [TestMethod]
+        public async Task Should_Archive_And_Unarchive_Diary_Entry()
+        {
+            // Arrange
+            await DatabaseContext.Database.EnsureDeletedAsync();
+            var diaryEntry = await _controller.CreateNewEntry(new DiaryEntryCreateModel
+            {
+                Description = "Testdescription",
+                EventAt = new DateTime(2021, 1, 16, 10, 0, 0),
+                Images = new List<DiaryImageCreateModel>
+                {
+                    new DiaryImageCreateModel
+                    {
+                        ImageFileName = "Testimages One",
+                        ImageFile = new byte[] { 1, 2, 3 }
+                    },
+                    new DiaryImageCreateModel
+                    {
+                        ImageFileName = "Testimages Two",
+                        ImageFile = new byte[] { 4, 5, 6, 7 }
+                    },
+                }
+            });
+
+            // Act - Save
+            var result = (OkObjectResult)await _controller.GetById(diaryEntry.Id);
+            var savedDiaryEntry = (DiaryEntryViewModel)result.Value;
+
+            // Assert
+            Assert.IsFalse(savedDiaryEntry.IsArchived);
+
+            // Act - Archive
+            result = (OkObjectResult)await _controller.ArchiveEntry(diaryEntry.Id);
+            savedDiaryEntry = (DiaryEntryViewModel)result.Value;
+
+            // Assert
+            Assert.IsTrue(savedDiaryEntry.IsArchived);
+
+            // Act - Unarchive
+            result = (OkObjectResult)await _controller.UnarchiveEntry(diaryEntry.Id);
+            savedDiaryEntry = (DiaryEntryViewModel)result.Value;
+
+            // Assert
+            Assert.IsFalse(savedDiaryEntry.IsArchived);
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_Entry()
+        {
+            // Arrange
+            await DatabaseContext.Database.EnsureDeletedAsync();
+            var diaryEntry = await _controller.CreateNewEntry(new DiaryEntryCreateModel
+            {
+                Description = "Testdescription",
+                EventAt = new DateTime(2021, 1, 16, 10, 0, 0),
+                Images = new List<DiaryImageCreateModel>
+                {
+                    new DiaryImageCreateModel
+                    {
+                        ImageFileName = "Testimages One",
+                        ImageFile = new byte[] { 1, 2, 3 }
+                    },
+                    new DiaryImageCreateModel
+                    {
+                        ImageFileName = "Testimages Two",
+                        ImageFile = new byte[] { 4, 5, 6, 7 }
+                    },
+                }
+            });
+
+            // Act - Save
+            var result = (OkObjectResult)await _controller.GetById(diaryEntry.Id);
+            var savedDiaryEntry = (DiaryEntryViewModel)result.Value;
+
+            // Assert
+            Assert.IsFalse(savedDiaryEntry.IsArchived);
+
+            // Act - Delete
+            var deleteResult = (OkResult)await _controller.DeleteEntry(diaryEntry.Id);
+
+            // Assert
+            var failResult = (BadRequestObjectResult)await _controller.GetById(diaryEntry.Id);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("ERROR_DIARY_ENTRY_NOT_FOUND", failResult.Value);
+
+            DiaryEntry diaryEntryInDatabase = await DatabaseContext
+                .Set<DiaryEntry>()
+                .FirstOrDefaultAsync(x => x.Id == diaryEntry.Id);
+            Assert.IsNull(diaryEntryInDatabase);
+
+            foreach (var diaryImageId in diaryEntry.Images.Select(x => x.Id))
+            {
+                var diaryImageInDatabase = await DatabaseContext
+                    .Set<DiaryImage>()
+                    .FirstOrDefaultAsync(x => x.Id == diaryImageId);
+                Assert.IsNull(diaryImageInDatabase);
+            }
         }
     }
 }
