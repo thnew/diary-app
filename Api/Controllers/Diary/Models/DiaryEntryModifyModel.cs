@@ -9,11 +9,6 @@ namespace Api.Controllers.Diary.Models
     public class DiaryEntryModifyModel
     {
         /// <summary>
-        /// The id of the entry that should be modified
-        /// </summary>
-        public long Id { get; set; }
-
-        /// <summary>
         /// When the described event happened
         /// </summary>
         public DateTime EventAt { get; set; }
