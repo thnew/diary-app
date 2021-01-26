@@ -20,11 +20,6 @@ namespace Api.Database.Models
         public string Description { get; set; }
 
         /// <summary>
-        /// Whether this entry is archived
-        /// </summary>
-        public bool IsArchived { get; set; }
-
-        /// <summary>
         /// The user this entry belongs to
         /// </summary>
         [ForeignKey(nameof(UserId))]

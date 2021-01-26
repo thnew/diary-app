@@ -24,11 +24,6 @@ namespace Api.Controllers.Diary.Models
         public string Description { get; set; }
 
         /// <summary>
-        /// Whether this entry is archived
-        /// </summary>
-        public bool IsArchived { get; set; }
-
-        /// <summary>
         /// Images connected to this entry
         /// </summary>
         public IEnumerable<DiaryImageViewModel> Images { get; set; }

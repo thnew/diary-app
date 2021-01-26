@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Api.BusinessServices;
@@ -103,12 +102,12 @@ namespace Api.Controllers.Diary
         /// <summary>
         /// Used to modify an existing diary entry
         /// </summary>
-        public async Task<(bool hasErrors, string errorMessage, DiaryEntry result)> ModifyEntry(long id, DiaryEntryModifyModel modifyModel)
+        public async Task<(bool hasErrors, string errorMessage, DiaryEntry result)> ModifyEntry(DiaryEntryModifyModel modifyModel)
         {
             var entry = await _databaseContext
                 .Set<DiaryEntry>()
                 .Include(x => x.DiaryImages)
-                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == _userBusinessService.CurrentUserId);
+                .FirstOrDefaultAsync(x => x.Id == modifyModel.Id && x.UserId == _userBusinessService.CurrentUserId);
             if (entry == null)
             {
                 return (true, "ERROR_DIARY_ENTRY_NOT_FOUND", null);
@@ -122,49 +121,6 @@ namespace Api.Controllers.Diary
             {
                 await UpdateDiaryImages(entry.DiaryImages, modifyModel.Images, entry.Id, _userBusinessService.CurrentUserName);
             }
-
-            await _databaseContext.SaveChangesAsync();
-
-            return (false, null, entry);
-        }
-
-        /// <summary>
-        /// Used to un-/archive a diary entry
-        /// </summary>
-        public async Task<(bool hasErrors, string errorMessage, DiaryEntry result)> ArchiveEntry(long id, bool shouldBeArchived)
-        {
-            var entry = await _databaseContext
-                .Set<DiaryEntry>()
-                .Include(x => x.DiaryImages)
-                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == _userBusinessService.CurrentUserId);
-            if (entry == null)
-            {
-                return (true, "ERROR_DIARY_ENTRY_NOT_FOUND", null);
-            }
-
-            entry.IsArchived = shouldBeArchived;
-            entry.UpdateModified<DiaryEntry>(_userBusinessService.CurrentUserName);
-
-            await _databaseContext.SaveChangesAsync();
-
-            return (false, null, entry);
-        }
-
-        /// <summary>
-        /// Used to un-/archive a diary entry
-        /// </summary>
-        public async Task<(bool hasErrors, string errorMessage, DiaryEntry result)> DeleteEntry(long id)
-        {
-            var entry = await _databaseContext
-                .Set<DiaryEntry>()
-                .Include(x => x.DiaryImages)
-                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == _userBusinessService.CurrentUserId);
-            if (entry == null)
-            {
-                return (true, "ERROR_DIARY_ENTRY_NOT_FOUND", null);
-            }
-
-            _databaseContext.Set<DiaryEntry>().Remove(entry);
 
             await _databaseContext.SaveChangesAsync();
 
@@ -215,7 +171,6 @@ namespace Api.Controllers.Diary
                 Id = x.Id,
                 Description = x.Description,
                 EventAt = x.EventAt,
-                IsArchived = x.IsArchived,
                 Images = x.DiaryImages.Select(image => new DiaryImageViewModel
                 {
                     Id = image.Id,
