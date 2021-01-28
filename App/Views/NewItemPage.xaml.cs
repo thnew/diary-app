@@ -11,7 +11,7 @@ namespace App.Views
 {
     public partial class NewItemPage : ContentPage
     {
-        public Item Item { get; set; }
+        public DiaryEntry Item { get; set; }
 
         public NewItemPage()
         {

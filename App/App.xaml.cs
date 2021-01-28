@@ -3,6 +3,7 @@ using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using App.Services;
 using App.Views;
+using App.Models;
 
 namespace App
 {
@@ -13,7 +14,7 @@ namespace App
         {
             InitializeComponent();
 
-            DependencyService.Register<MockDataStore>();
+            DependencyService.Register<IDataStore<DiaryEntry>, DiaryEntryDataStore>();
             MainPage = new AppShell();
         }
 

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
-using App.Models;
 using Xamarin.Forms;
 
 namespace App.ViewModels
@@ -9,43 +7,39 @@ namespace App.ViewModels
     [QueryProperty(nameof(ItemId), nameof(ItemId))]
     public class ItemDetailViewModel : BaseViewModel
     {
-        private string itemId;
-        private string text;
-        private string description;
-        public string Id { get; set; }
-
-        public string Text
-        {
-            get => text;
-            set => SetProperty(ref text, value);
-        }
+        private long _itemId;
+        private string _description;
+        private DateTime _eventAt;
+        public long Id { get; set; }
 
         public string Description
         {
-            get => description;
-            set => SetProperty(ref description, value);
+            get => _description;
+            set => SetProperty(ref _description, value);
+        }
+
+        public DateTime EventAt
+        {
+            get => _eventAt;
+            set => SetProperty(ref _eventAt, value);
         }
 
         public string ItemId
         {
-            get
-            {
-                return itemId;
-            }
             set
             {
-                itemId = value;
-                LoadItemId(value);
+                _itemId = long.Parse(value);
+                LoadItemId(_itemId);
             }
         }
 
-        public async void LoadItemId(string itemId)
+        public async void LoadItemId(long itemId)
         {
             try
             {
                 var item = await DataStore.GetItemAsync(itemId);
                 Id = item.Id;
-                Text = item.Text;
+                EventAt = item.EventAt;
                 Description = item.Description;
             }
             catch (Exception)

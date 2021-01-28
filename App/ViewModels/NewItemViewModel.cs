@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Input;
 using App.Models;
 using Xamarin.Forms;
 
@@ -9,7 +6,6 @@ namespace App.ViewModels
 {
     public class NewItemViewModel : BaseViewModel
     {
-        private string text;
         private string description;
 
         public NewItemViewModel()
@@ -22,14 +18,7 @@ namespace App.ViewModels
 
         private bool ValidateSave()
         {
-            return !String.IsNullOrWhiteSpace(text)
-                && !String.IsNullOrWhiteSpace(description);
-        }
-
-        public string Text
-        {
-            get => text;
-            set => SetProperty(ref text, value);
+            return !String.IsNullOrWhiteSpace(description);
         }
 
         public string Description
@@ -49,10 +38,9 @@ namespace App.ViewModels
 
         private async void OnSave()
         {
-            Item newItem = new Item()
+            var newItem = new DiaryEntry()
             {
-                Id = Guid.NewGuid().ToString(),
-                Text = Text,
+                Id = new Random().Next(0, (int)Math.Pow(2, 16)),
                 Description = Description
             };
 

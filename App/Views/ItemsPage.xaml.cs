@@ -1,15 +1,6 @@
-﻿using System;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
-
-using App.Models;
-using App.Views;
+﻿using Xamarin.Forms;
 using App.ViewModels;
+using System.ComponentModel;
 
 namespace App.Views
 {
@@ -22,12 +13,24 @@ namespace App.Views
             InitializeComponent();
 
             BindingContext = _viewModel = new ItemsViewModel();
+
+            _viewModel.PropertyChanged += OnErrorMessage;
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
             _viewModel.OnAppearing();
+        }
+
+        private void OnErrorMessage(object value, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName != nameof(ItemsViewModel.HasErrors)
+                && args.PropertyName != nameof(ItemsViewModel.ErrorMessage)) return;
+            if (!(_viewModel?.HasErrors ?? false)
+                || string.IsNullOrWhiteSpace(_viewModel.ErrorMessage)) return;
+
+            DisplayAlert("Something went wrong", _viewModel.ErrorMessage, "Ok");
         }
     }
 }
