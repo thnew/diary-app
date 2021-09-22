@@ -9,6 +9,8 @@ using Api.Database.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Api.Database;
 
 namespace Tests
 {
@@ -16,11 +18,16 @@ namespace Tests
     public class DiaryControllerTests : TestBase
     {
         private readonly DiaryController _controller;
+        private readonly UserBusinessService _userBusinessService;
 
         public DiaryControllerTests()
         {
-            var diaryBusinessService = (DiaryBusinessService)ServiceProvider.GetService(typeof(DiaryBusinessService));
-            _controller = new DiaryController(diaryBusinessService);
+            var databaseContext = (DatabaseContext)ServiceProvider.GetService(typeof(DatabaseContext));
+            _userBusinessService = (UserBusinessService)ServiceProvider.GetService(typeof(UserBusinessService));
+
+            var diaryBusinessService = new DiaryBusinessService(databaseContext, _userBusinessService, new NullLogger<DiaryBusinessService>());
+
+            _controller = new DiaryController(diaryBusinessService, new NullLogger<DiaryController>());
         }
 
         [TestMethod]
@@ -47,8 +54,6 @@ namespace Tests
                 }
             });
 
-            var userBusinessService = (UserBusinessService)ServiceProvider.GetService(typeof(UserBusinessService));
-
             // Act
             var result = (OkObjectResult)await _controller.GetById(diaryEntry.Id);
             var savedDiaryEntry = (DiaryEntryViewModel)result.Value;
@@ -70,7 +75,7 @@ namespace Tests
             Assert.AreEqual(DateTime.Now.Year, dbEntry.CreatedAt.Year);
             Assert.AreEqual(DateTime.Now.Month, dbEntry.CreatedAt.Month);
             Assert.AreEqual(DateTime.Now.Day, dbEntry.CreatedAt.Day);
-            Assert.AreEqual(userBusinessService.CurrentUserName, dbEntry.CreatedBy);
+            Assert.AreEqual(_userBusinessService.CurrentUserName, dbEntry.CreatedBy);
             Assert.IsFalse(dbEntry.IsArchived);
         }
 
@@ -125,8 +130,6 @@ namespace Tests
                 }
             };
 
-            var userBusinessService = (UserBusinessService)ServiceProvider.GetService(typeof(UserBusinessService));
-
             // Act
             var result = (OkObjectResult)await _controller.ModifyEntry(diaryEntry.Id, modifyModel);
             var savedDiaryEntry = (DiaryEntryViewModel)result.Value;
@@ -162,12 +165,12 @@ namespace Tests
             Assert.AreEqual(DateTime.Now.Year, dbEntry.CreatedAt.Year);
             Assert.AreEqual(DateTime.Now.Month, dbEntry.CreatedAt.Month);
             Assert.AreEqual(DateTime.Now.Day, dbEntry.CreatedAt.Day);
-            Assert.AreEqual(userBusinessService.CurrentUserName, dbEntry.CreatedBy);
+            Assert.AreEqual(_userBusinessService.CurrentUserName, dbEntry.CreatedBy);
 
             Assert.AreEqual(DateTime.Now.Year, dbEntry.ModifiedAt.Year);
             Assert.AreEqual(DateTime.Now.Month, dbEntry.ModifiedAt.Month);
             Assert.AreEqual(DateTime.Now.Day, dbEntry.ModifiedAt.Day);
-            Assert.AreEqual(userBusinessService.CurrentUserName, dbEntry.ModifiedBy);
+            Assert.AreEqual(_userBusinessService.CurrentUserName, dbEntry.ModifiedBy);
         }
 
         [TestMethod]
@@ -176,11 +179,10 @@ namespace Tests
             // Arrange
             await DatabaseContext.Database.EnsureDeletedAsync();
 
-            var userBusinessService = (UserBusinessService)ServiceProvider.GetService(typeof(UserBusinessService));
             var currentUser = await DatabaseContext
                 .Set<User>()
                 .AddAsync(new User { UserName = "Max Muster" });
-            userBusinessService.SetCurrentUser(currentUser.Entity);
+            _userBusinessService.SetCurrentUser(currentUser.Entity);
 
             var diaryEntry = await _controller.CreateNewEntry(new DiaryEntryCreateModel
             {
