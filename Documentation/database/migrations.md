@@ -4,15 +4,14 @@
 
 ## Updating the database
 ```
-dotnet ef database update -- --environment Development
+export ASPNETCORE_ENVIRONMENT=Development
+dotnet ef database update
 ```
 
-Here are the command for the other environments:
+Here is the command for the PROD environment:
 ```
-dotnet ef database update -- --environment Test
-```
-```
-dotnet ef database update -- --environment Prod
+export ASPNETCORE_ENVIRONMENT=Production
+dotnet ef database update
 ```
 
 ## Adding new migration scripts
