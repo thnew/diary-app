@@ -30,7 +30,7 @@ namespace Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
             });
 
-            services.AddSingleton(provider => Configuration);
+            services.AddSingleton(provider => Configuration); 
             AddServices(services);
 
             services.AddDbContext<DatabaseContext>(options =>

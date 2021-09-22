@@ -21,6 +21,11 @@ namespace Api.Database
         public DbSet<DiaryImage> DiaryImages { get; set; }
 
         /// <summary>
+        /// The logging table
+        /// </summary>
+        public DbSet<LogEntry> LogEntries { get; set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
