@@ -62,7 +62,7 @@ namespace App.Services
             try
             {
                 var client = new HttpClient();
-                return (false, null, await client.GetFromJsonAsync<IEnumerable<DiaryEntry>>("https://localhost:5001/api/diary"));
+                return (false, null, await client.GetFromJsonAsync<IEnumerable<DiaryEntry>>("https://diary-app.azurewebsites.net/api/diary"));
             }
             catch(Exception e)
             {
